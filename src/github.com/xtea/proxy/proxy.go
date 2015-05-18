@@ -10,12 +10,13 @@ import (
 	"net/url"
 )
 
+// entry point.
 func main() {
 	// add handle
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 
 		// parse api info from URL.
-		api, err := ParseApiInfo(r.URL.Query())
+		api, err := ParseApiInfo(r.URL)
 		if err != nil {
 			ErrorMessage(w, err.Error())
 			return
@@ -23,30 +24,27 @@ func main() {
 		// save log for statistic.
 		log.Println("access api", api)
 		// find mapping mehtod by app.ApiInfo
-		handle, err := findHandleMethod(api)
+		handleApiMethod, err := findHandleMethod(api)
 		if err != nil {
 			ErrorMessage(w, "api method not support.")
 			return
 		}
 		// call real handle function
-		handle(api, w, r)
+		handleApiMethod(api, w, r)
 	})
-	log.Fatal(http.ListenAndServe(":8080", nil))
+	log.Fatal(http.ListenAndServe(":8888", nil))
 }
 
-func ParseApiInfo(v url.Values) (app.ApiInfo, error) {
-	target, ok := v["target"]
-	if !ok {
-		return app.ApiInfo{}, errors.New("parameters missed")
-	}
-	api, ok := app.GetApiInfoById(target[0])
+// Parse api info from url.URL.
+func ParseApiInfo(u *url.URL) (app.ApiInfo, error) {
+	api, ok := app.GetApiInfoById(u.Path)
 	if !ok {
 		return app.ApiInfo{}, errors.New("api not found.")
 	}
 	return api, nil
 }
 
-// response error message to client.
+// Response error message to client.
 func ErrorMessage(w http.ResponseWriter, format string, a ...interface{}) {
 	if len(a) > 0 {
 		fmt.Fprintf(w, format, a)
@@ -56,7 +54,7 @@ func ErrorMessage(w http.ResponseWriter, format string, a ...interface{}) {
 
 }
 
-// Find support handle method.
+// Find support handle method by ApiInfo.
 func findHandleMethod(a app.ApiInfo) (HandleMethod, error) {
 	switch m := a.Method; m {
 	case "GET":
@@ -66,11 +64,11 @@ func findHandleMethod(a app.ApiInfo) (HandleMethod, error) {
 		// POST method
 		return HandlePostMethod, nil
 	default:
-		return nil, errors.New("method not support.")
+		return nil, errors.New("http method not support.")
 	}
 }
 
-// delegate handle
+// define delegate handle method.
 type HandleMethod func(a app.ApiInfo, w http.ResponseWriter, r *http.Request)
 
 // Hanle http get method to remote api.
