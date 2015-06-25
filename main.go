@@ -24,7 +24,7 @@ func main() {
 
 	hlist := []http.Handler{
 		// print debug log handler
-		&proxy.DebugHandler{}
+		&proxy.DebugHandler{},
 	}
 
 	// add handle
