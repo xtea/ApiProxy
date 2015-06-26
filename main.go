@@ -22,7 +22,7 @@ func main() {
 	log.Println("run mode is", *mode)
 	log.Println("startup and listen", *port)
 
-	hlist := []http.Handler{
+	hlist := []proxy.Handler{
 		// print debug log handler
 		&proxy.DebugHandler{},
 	}
@@ -41,7 +41,7 @@ func main() {
 }
 
 type DefaultHandleChain struct {
-	HandleList []http.Handler
+	HandleList []proxy.Handler
 }
 
 func (this *DefaultHandleChain) ServeHTTP(w http.ResponseWriter, r *http.Request) {
