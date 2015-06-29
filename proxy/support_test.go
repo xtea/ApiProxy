@@ -1,7 +1,8 @@
 package proxy
 
 import (
-	"reflect"
+	"github.com/EE-Tools/ApiProxy/proxy"
+	"strings"
 	"testing"
 )
 
@@ -17,11 +18,17 @@ func TestParseCodeAndPath(t *testing.T) {
 	}
 
 	for _, c := range cases {
-		a, err := ParseCodeAndPath(c.code + c.path)
+		a, err := proxy.ParseCodeAndPath(c.code + c.path)
 		if err != nil {
 			t.Fatal(err)
 		}
-		reflect.DeepEqual(a, ApiUrlFileds{c.code, c.path})
+		expectC := strings.Replace(c.code, "/", "", -1)
+		if a.Code != expectC {
+			t.Errorf("expect %s,but got %s", expectC, a.Code)
+		}
+		if a.Path != c.path {
+			t.Errorf("expect %s,but got %s", c.path, a.Path)
+		}
 	}
 
 }
