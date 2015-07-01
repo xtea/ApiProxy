@@ -11,10 +11,6 @@ import (
 	_ "strings"
 )
 
-const (
-	HTTP_CODE_NOTFOUND = 404
-)
-
 // define delegate handle method.
 type HandleMethod func(a models.ApiInfo, w http.ResponseWriter, r *http.Request)
 
@@ -27,24 +23,22 @@ func (this *ProxyHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) bool
 	if err != nil {
 		// parse error
 		log.Printf("parse api fail, write 404 error,%s", err)
-		w.WriteHeader(404)
+		WriteHttpError(HTTP_CODE_NOTFOUND, w)
 		return false
 	}
-	log.Println(apiInfo.Name)
-	//
+	// find adapte http method function
 	httpMethodHandle, err := findHandleMethod(apiInfo)
 	if err != nil {
 		log.Printf("register api %v method not support", apiInfo)
-		w.WriteHeader(500)
+		WriteHttpError(HTTP_CODE_INTERNAL_SERVER_ERROR, w)
 		return false
 	}
-	// handle proxy
+	// call handle proxy
 	httpMethodHandle(apiInfo, w, r)
-	log.Println("all done.")
 	return true
 }
 
-// // Parse api info from url.URL.
+// Parse api info from url.URL.
 func ParseApiInfo(u *url.URL) (models.ApiInfo, error) {
 	al, err := ParseCodeAndPath(u.Path)
 	log.Println(al)
@@ -75,7 +69,6 @@ func HandleGetMethod(a models.ApiInfo, w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, "error is %q", err)
 		return
 	}
-
 	afterHandleMethod(w, resp)
 }
 
@@ -98,8 +91,13 @@ func buildRemoteApiUrl(a models.ApiInfo) string {
 }
 
 // After common opeations.
-func afterHandleMethod(w http.ResponseWriter, resp *http.Response) error {
+func afterHandleMethod(w http.ResponseWriter, resp *http.Response) {
+	// if status is not ok , direct write error to client.
+	if resp.StatusCode != 200 {
+		WriteHttpError(resp.StatusCode, w)
+		return
+	}
 	defer resp.Body.Close()
 	_, err := io.Copy(w, resp.Body)
-	return err
+	log.Printf("copy io err %s", err)
 }
