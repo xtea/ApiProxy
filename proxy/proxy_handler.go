@@ -41,7 +41,6 @@ func (this *ProxyHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) bool
 	WriteAccessLogByApiInfo(
 		LogWrapper{
 			AppId:    apiInfo.ApiId,
-			Scope:    "test",
 			ClientIp: r.RemoteAddr,
 		})
 	return true
