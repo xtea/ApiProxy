@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"github.com/EE-Tools/ApiProxy/proxy"
+	_ "github.com/EE-Tools/goauth/models/db"
 	"log"
 	"net/http"
 	"time"
@@ -11,6 +12,7 @@ import (
 // listen http port
 var port = flag.String("port", "8080", "http serve port")
 var mode = flag.String("mode", "debug", "project run mode,default is debug")
+var initLogFolder = flag.String("log", "", "project log folder")
 
 func init() {
 	flag.Parse()
@@ -22,13 +24,18 @@ func main() {
 	log.Println("run mode is", *mode)
 	log.Println("startup and listen", *port)
 
+	// init log
+	proxy.InitAccessLogger(*initLogFolder)
+
+	// declare work handler
 	hlist := []proxy.Handler{
 		// print debug log handler
 		&proxy.DebugHandler{},
+		&proxy.OauthCheckHandler{},
 		&proxy.ProxyHandler{},
 	}
 
-	// add handle
+	// register handler
 	s := &http.Server{
 		Addr: ":" + *port,
 		Handler: &DefaultHandleChain{
@@ -47,6 +54,9 @@ type DefaultHandleChain struct {
 
 func (this *DefaultHandleChain) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	for _, handle := range this.HandleList {
-		handle.ServeHTTP(w, r)
+		run := handle.ServeHTTP(w, r)
+		if !run {
+			break
+		}
 	}
 }

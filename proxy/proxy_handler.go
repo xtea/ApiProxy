@@ -15,6 +15,7 @@ import (
 type HandleMethod func(a models.ApiInfo, w http.ResponseWriter, r *http.Request)
 
 type ProxyHandler struct {
+	Log string
 }
 
 func (this *ProxyHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) bool {
@@ -35,6 +36,14 @@ func (this *ProxyHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) bool
 	}
 	// call handle proxy
 	httpMethodHandle(apiInfo, w, r)
+
+	// save access log
+	WriteAccessLogByApiInfo(
+		LogWrapper{
+			AppId:    apiInfo.ApiId,
+			Scope:    "test",
+			ClientIp: r.RemoteAddr,
+		})
 	return true
 }
 
@@ -99,5 +108,7 @@ func afterHandleMethod(w http.ResponseWriter, resp *http.Response) {
 	}
 	defer resp.Body.Close()
 	_, err := io.Copy(w, resp.Body)
-	log.Printf("copy io err %s", err)
+	if err != nil {
+		log.Printf("copy io err %s", err)
+	}
 }

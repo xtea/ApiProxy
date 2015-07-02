@@ -9,13 +9,25 @@ import (
 	"time"
 )
 
+const (
+	LOG_FORMAT = "user{%s} appid{%d} visit scope{%s} from ip{%s}"
+)
+
 var (
 	LoggerForParse *log.Logger
 )
 
+type LogWrapper struct {
+	AppId    int64
+	Scope    string
+	ClientIp string
+	UID      string // User ID , such as smartphone mac address.
+}
+
 // // put log file to path
 func InitAccessLogger(logPath string) {
 	if logPath == "" {
+		log.Println("Warn! Access log folder not been assigned, all info will print in console")
 		// log path is empty.
 		initLoggerHandle(os.Stdout)
 	} else {
@@ -27,7 +39,6 @@ func InitAccessLogger(logPath string) {
 		defer f.Close()
 		initLoggerHandle(f)
 	}
-
 }
 
 // Create a file if not exists , append this file.
@@ -40,11 +51,17 @@ func initLoggerHandle(analysisHandle io.Writer) {
 }
 
 // Write result to access log,
-func WriteAccessLog(raw string) {
+func writeAccessLog(raw string) {
 	LoggerForParse.Println(timeFormat(), raw)
 }
 
 // return access log time format.
 func timeFormat() string {
 	return time.Now().Format("2006-01-02 15:04:05")
+}
+
+// write access log in file for analysis.
+func WriteAccessLogByApiInfo(a LogWrapper) {
+	content := fmt.Sprintf(LOG_FORMAT, a.UID, a.AppId, a.Scope, a.ClientIp)
+	writeAccessLog(content)
 }
