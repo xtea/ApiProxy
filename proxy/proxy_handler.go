@@ -7,7 +7,6 @@ import (
 	"io"
 	"log"
 	"net/http"
-	"net/url"
 	_ "strings"
 )
 
@@ -44,16 +43,6 @@ func (this *ProxyHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) bool
 			ClientIp: r.RemoteAddr,
 		})
 	return true
-}
-
-// Parse api info from url.URL.
-func ParseApiInfo(u *url.URL) (models.ApiInfo, error) {
-	al, err := ParseCodeAndPath(u.Path)
-	log.Println(al)
-	if err != nil {
-		return models.ApiInfo{}, err
-	}
-	return models.GetApiInfoByCodeAndPath(al.Code, al.Path)
 }
 
 // Find support handle method by ApiInfo.

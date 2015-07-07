@@ -3,6 +3,9 @@ package proxy
 import (
 	"errors"
 	"fmt"
+	"github.com/EE-Tools/regapi/models"
+	"log"
+	"net/url"
 	"strings"
 )
 
@@ -43,4 +46,14 @@ func ParseCodeAndPath(urlPath string) (ApiUrlFileds, error) {
 
 func (a *ApiUrlFileds) String() string {
 	return fmt.Sprintf("code:%s,path:%s", a.Code, a.Path)
+}
+
+// Parse api info from url.URL.
+func ParseApiInfo(u *url.URL) (models.ApiInfo, error) {
+	al, err := ParseCodeAndPath(u.Path)
+	log.Println(al)
+	if err != nil {
+		return models.ApiInfo{}, err
+	}
+	return models.GetApiInfoByCodeAndPath(al.Code, al.Path)
 }
